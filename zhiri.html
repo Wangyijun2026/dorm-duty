@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>宿舍值日轮表｜每人值日一周</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,sans-serif}
+body{background:#f4f7fa;color:#222;padding:24px;max-width:600px;margin:30px auto}
+.card{background:#fff;border-radius:16px;padding:28px;box-shadow:0 4px 16px #00000015}
+h1{text-align:center;font-size:24px;margin-bottom:24px}
+.info{font-size:18px;line-height:1.8;margin:12px 0}
+.highlight{font-size:26px;color:#d63031;font-weight:bold}
+.setting{margin-top:24px;padding-top:20px;border-top:1px solid #eee}
+input{width:100%;padding:10px;margin:8px 0;border:1px solid #ccc;border-radius:8px;font-size:16px}
+button{width:100%;padding:12px;border:none;background:#0984e3;color:#fff;border-radius:8px;font-size:17px;margin-top:10px;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="card">
+<h1>宿舍值日提醒</h1>
+<div class="info">当前值日人：<span class="highlight" id="name"></span></div>
+<div class="info">本周值日剩余天数：<span class="highlight" id="dayLeft"></span></div>
+<div class="info">下一位：<span id="nextName"></span></div>
+
+<div class="setting">
+<div>值日名单（逗号隔开）</div>
+<input id="names" value="甲,乙,丙,丁">
+<div>起始值日日期（第一个人开始值日那天）</div>
+<input id="startDate" type="date">
+<button onclick="calc()">更新配置</button>
+</div>
+</div>
+
+<script>
+// 配置
+let namesInput = document.getElementById('names');
+let dateInput = document.getElementById('startDate');
+function calc(){
+    const names = namesInput.value.split(',').map(i=>i.trim()).filter(i=>i);
+    const start = new Date(dateInput.value);
+    if(names.length===0 || !dateInput.value)return alert('填好名单和起始日期');
+    const now = new Date();
+    const diffDay = Math.floor((now - start)/(1000*60*60*24));
+    if(diffDay<0){
+        document.getElementById('name').innerText="还未开始";
+        document.getElementById('dayLeft').innerText="--";
+        document.getElementById('nextName').innerText="--";
+        return;
+    }
+    const cycle = 7; // 每人值7天（一周）
+    const personIndex = Math.floor(diffDay / cycle) % names.length;
+    const passDays = diffDay % cycle;
+    const remain = cycle - passDays;
+    const nextIdx = (personIndex+1) % names.length;
+
+    document.getElementById('name').innerText = names[personIndex];
+    document.getElementById('dayLeft').innerText = remain;
+    document.getElementById('nextName').innerText = names[nextIdx];
+}
+// 读取本地保存
+window.onload=()=>{
+    const saved = localStorage.getItem('dormDutyConf');
+    if(saved){
+        const obj = JSON.parse(saved);
+        namesInput.value = obj.names;
+        dateInput.value = obj.date;
+    }
+    calc();
+}
+document.querySelector('button').onclick=()=>{
+    localStorage.setItem('dormDutyConf',JSON.stringify({
+        names:namesInput.value,
+        date:dateInput.value
+    }));
+    calc();
+    alert('保存成功！刷新页面也不会丢设置');
+}
+</script>
+</body>
+</html>
